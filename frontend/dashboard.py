@@ -2,7 +2,6 @@ import operator
 import pandas as pd
 from PIL import Image
 import streamlit as st
-from devtools import debug
 from functools import reduce
 import plotly.express as px
 from specklepy.logging import metrics
@@ -10,16 +9,16 @@ from specklepy.api import operations
 from specklepy.api.wrapper import StreamWrapper
 
 from utils import (
+    send_notes,
+    list_to_md,
+    format_commit,
+    format_branch,
+    simplify_glulam,
     preview_from_commit,
     preview_from_object,
-    format_branch,
-    format_commit,
-    list_to_md,
-    simplify_glulam,
-    send_notes,
+    create_print_data_df,
 )
 
-metrics.disable()
 # --------------------------
 # PAGE CONFIG
 favicon = Image.open("frontend/assets/speckle-chart-logo.png")
@@ -39,7 +38,7 @@ stream_stats_graphs = st.container()
 # HEADER
 # Page Header
 with header:
-    st.title("🧴🐑 Dashboard")
+    st.title("Demo Dashboard")
 # About info
 with header.expander("Links & More 🔽", expanded=True):
     st.markdown(
@@ -96,7 +95,7 @@ with user_input:
 # VIEWER
 if selected_commit:
     with viewer:
-        st.subheader(f"Selected Commit 👇")
+        st.subheader("Selected Commit 👇")
         st.write(
             f"Open this commit in [the frontend]({wrapper.server_url}/streams/{wrapper.stream_id}/commits/{selected_commit.id}) 🚀"
         )
@@ -116,6 +115,8 @@ commit_obj = (
 if glulams := getattr(commit_obj, "@glulams", []):
     glulam_df = pd.DataFrame.from_dict([simplify_glulam(g) for g in glulams])
     with glulam_analysis:
+        st.subheader("🧴🐑 Analysis")
+
         st.dataframe(glulam_df)
         mesh_df = pd.DataFrame(None, columns=["x", "y", "z", "id"])
         notes = {}
@@ -146,8 +147,7 @@ if glulams := getattr(commit_obj, "@glulams", []):
                         key=g.id,
                         max_chars=500,
                     )
-            submit = st.form_submit_button("Send Notes")
-            if submit:
+            if submit := st.form_submit_button("Send Notes"):
                 has_changed = False
                 for g in glulams:
                     if g.id in notes and notes[g.id] != getattr(g, "note", ""):
@@ -165,7 +165,53 @@ if glulams := getattr(commit_obj, "@glulams", []):
 
 # --------------------------
 # 3D Print Path Analysis
-#
+print_path_df = create_print_data_df(commit_obj) if commit_obj else None
+if print_path_df is not None and not print_path_df.empty:
+    with print_analysis:
+        st.subheader("🦾 3D Print Analysis")
+
+        fig_speed_delta_and_dev = px.line(
+            print_path_df,
+            x="time",
+            y=["deviation", "speedDelta", "speed"],
+            title="Deviation, Speed, and Speed Delta Over Time",
+        )
+        st.plotly_chart(fig_speed_delta_and_dev, use_container_width=True)
+
+        fig_speed_delta = px.line(
+            print_path_df, x="time", y="speedDelta", title="Speed Delta Over Time"
+        )
+        st.plotly_chart(fig_speed_delta, use_container_width=True)
+
+        fig_speed_dev = px.scatter(
+            print_path_df,
+            x="time",
+            y="deviation",
+            color="speed",
+            title="Deviation Over Time Coloured By Speed",
+        )
+        st.plotly_chart(fig_speed_dev, use_container_width=True)
+
+        fig_location_by_dev = px.scatter_3d(
+            print_path_df,
+            x="x",
+            y="y",
+            z="z",
+            color="deviation",
+            opacity=0.7,
+            title="Print Path Coloured By Deviation",
+        )
+        fig_location_by_dev.update_traces(marker_size=4)
+        fig_location_by_dev.update_layout(
+            scene=dict(
+                zaxis=dict(
+                    nticks=4,
+                    range=[-0.5, 0.75],
+                ),
+            ),
+        )
+        # fig_location_by_dev.update_z_axis
+        st.plotly_chart(fig_location_by_dev, use_container_width=True)
 # --------------------------
 
 # --------------------------
@@ -211,7 +257,7 @@ with stream_stats:
         label="Number of contributors", value=len(stream.collaborators)
     )
     # unique contributor names
-    contributorNames = set([col.name for col in stream.collaborators])
+    contributorNames = {col.name for col in stream.collaborators}
     # convert it to markdown list
     list_to_md(contributorNames, contributorCol)
     # -------

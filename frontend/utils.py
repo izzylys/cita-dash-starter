@@ -1,9 +1,10 @@
+import pandas as pd
 import streamlit as st
 from typing import List
 from specklepy.objects import Base
 from specklepy.api import operations
 from specklepy.api.wrapper import StreamWrapper
-from specklepy.api.models import Stream, Commit, Branch
+from specklepy.api.models import Commit, Branch
 
 from devtools import debug
 
@@ -40,6 +41,38 @@ def simplify_glulam(glulam: Base) -> dict:
         "width": glulam["@glulam"].dataValue.width,
         "height": glulam["@glulam"].dataValue.height,
     }
+
+
+def simplify_print_data_point(dp: Base) -> dict:
+    """Simplify print data point object for easy dataframe creations"""
+    return {
+        "id": dp.id,
+        "deviation": dp.deviation,
+        "speed": dp.speed,
+        "speedDelta": dp.speedDelta,
+        "target": dp.target,
+        "time": dp.time,
+        "x": dp.point.x,
+        "y": dp.point.y,
+        "z": dp.point.z,
+    }
+
+
+def create_print_data_df(commit_obj: Base) -> pd.DataFrame:
+    """Create a dataframe for 3D print data commit object"""
+    try:
+        data = commit_obj["@Data"][0]
+        debug(simplify_print_data_point(data[0]))
+        return pd.DataFrame(
+            [
+                simplify_print_data_point(dp)
+                for dp in data
+                if getattr(dp, "deviation", None)
+            ]
+        )
+    except Exception as ex:
+        debug(ex)
+        return None
 
 
 def list_to_md(list_items, column):
