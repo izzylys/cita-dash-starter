@@ -159,6 +159,8 @@ if glulams := getattr(commit_obj, "@glulams", []):
                         wrapper, glulams, branch_name="glulam-updates"
                     )
                     st.write(f"Commit created ({commit_id})")
+
+                has_changed = False
 # --------------------------
 
 # --------------------------
