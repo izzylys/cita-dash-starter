@@ -73,6 +73,7 @@ def send_notes(wrapper: StreamWrapper, glulams: List[Base], branch_name="main") 
 
     obj_id = operations.send(commit_obj, [wrapper.get_transport()])
     client = wrapper.get_client()
+    client.branch.create(wrapper.stream_id, branch_name)
     return client.commit.create(
         wrapper.stream_id,
         obj_id,
