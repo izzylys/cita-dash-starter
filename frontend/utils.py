@@ -1,6 +1,7 @@
+from typing import List
+
 import pandas as pd
 import streamlit as st
-from typing import List
 from specklepy.objects import Base
 from specklepy.api import operations
 from specklepy.api.wrapper import StreamWrapper
@@ -76,7 +77,7 @@ def create_print_data_df(commit_obj: Base) -> pd.DataFrame:
 
 
 def list_to_md(list_items, column):
-    """Format an iterable as a mardown list"""
+    """Format an iterable as a markdown list"""
     if not list_items:
         return ""
     list_str = "".join(f"- {item}\n" for item in list_items)

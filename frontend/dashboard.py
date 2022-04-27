@@ -1,10 +1,10 @@
 import operator
+from functools import reduce
+
 import pandas as pd
 from PIL import Image
 import streamlit as st
-from functools import reduce
 import plotly.express as px
-from specklepy.logging import metrics
 from specklepy.api import operations
 from specklepy.api.wrapper import StreamWrapper
 
