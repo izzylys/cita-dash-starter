@@ -210,8 +210,27 @@ if print_path_df is not None and not print_path_df.empty:
                 ),
             ),
         )
-        # fig_location_by_dev.update_z_axis
         st.plotly_chart(fig_location_by_dev, use_container_width=True)
+
+        fig_location_by_speed = px.scatter_3d(
+            print_path_df,
+            x="x",
+            y="y",
+            z="z",
+            color="speed",
+            opacity=0.7,
+            title="Print Path Coloured By Speed",
+        )
+        fig_location_by_speed.update_traces(marker_size=4)
+        fig_location_by_speed.update_layout(
+            scene=dict(
+                zaxis=dict(
+                    nticks=4,
+                    range=[-0.5, 0.75],
+                ),
+            ),
+        )
+        st.plotly_chart(fig_location_by_speed, use_container_width=True)
 # --------------------------
 
 # --------------------------
